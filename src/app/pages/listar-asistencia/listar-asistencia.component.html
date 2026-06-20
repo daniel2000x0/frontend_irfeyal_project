@@ -1,0 +1,253 @@
+<div class="asistencia-page">
+  <div class="page-header">
+    <h1><i class="pi pi-calendar"></i> Asistencia</h1>
+    <p class="page-subtitle">Listado de alumnos y reportes de asistencia</p>
+  </div>
+
+  <p-toast></p-toast>
+
+  <div class="page-card">
+    <p-toolbar styleClass="mb-4">
+      <div class="grid formgrid p-fluid w-full">
+        <div class="field col-12 md:col-4">
+          <label>Periodo</label>
+          <p-select
+            [options]="periodos"
+            placeholder="Seleccione un periodo"
+            optionLabel="malla.descripcion"
+            optionValue="id_periodo"
+            (onChange)="onPeriodo($event.value)"
+            [showClear]="true"
+          >
+            <ng-template let-item pTemplate="item">
+              <div>{{ item.malla.descripcion }} | {{ item.fecha_inicio | date: 'yyyy-MM-dd' }} — {{ item.fecha_fin | date: 'yyyy-MM-dd' }}</div>
+            </ng-template>
+          </p-select>
+        </div>
+
+        <div class="field col-12 md:col-4">
+          <label>Modalidad</label>
+          <p-select
+            [disabled]="filtros.showModalidad"
+            [options]="modalidades"
+            placeholder="Seleccione una modalidad"
+            optionLabel="descripcion"
+            optionValue="id_modalidad"
+            (onChange)="onModalidad($event.value)"
+            [showClear]="true"
+          ></p-select>
+        </div>
+
+        <div class="field col-12 md:col-4">
+          <label>Curso</label>
+          <p-select
+            [disabled]="filtros.showCurso"
+            [options]="cursos"
+            placeholder="Seleccione un curso"
+            optionLabel="descripcion"
+            optionValue="id_curso"
+            (onChange)="onCurso($event.value)"
+            [showClear]="true"
+          >
+            <ng-template let-item pTemplate="item">
+              <div>{{ item.descripcion }}</div>
+            </ng-template>
+          </p-select>
+        </div>
+
+        <div class="field col-12 md:col-4">
+          <label>Paralelo</label>
+          <p-select
+            [disabled]="filtros.showParalelo"
+            [options]="paralelos"
+            placeholder="Seleccione un paralelo"
+            optionLabel="descripcion"
+            optionValue="id_paralelo"
+            (onChange)="onParalelo($event.value)"
+            [showClear]="true"
+          ></p-select>
+        </div>
+
+        <div class="field col-12 md:col-4">
+          <label>Asignatura</label>
+          <p-select
+            [disabled]="filtros.showAsignatura"
+            [options]="asignaturas"
+            placeholder="Seleccione una asignatura"
+            optionLabel="descripcion"
+            optionValue="id_asignatura"
+            (onChange)="onAsignatura($event.value)"
+            [showClear]="true"
+          ></p-select>
+        </div>
+
+        <div class="field col-12 md:col-4 flex align-items-end">
+          <input
+            [disabled]="filtros.showAsignatura"
+            pInputText
+            type="text"
+            [(ngModel)]="filterValue"
+            (input)="dt2.filterGlobal(filterValue, 'contains')"
+            placeholder="Buscar estudiante..."
+            class="w-full"
+          />
+        </div>
+      </div>
+    </p-toolbar>
+
+    <p-table
+      #dt2
+      [value]="estudiantes"
+      [rows]="10"
+      [paginator]="true"
+      [globalFilterFields]="['id_persona.cedula','id_persona.nombre','id_persona.apellido']"
+      styleClass="p-datatable-striped"
+      responsiveLayout="scroll"
+      currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} estudiantes"
+      [showCurrentPageReport]="true"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th pSortableColumn="id_estudiante">ID <p-sortIcon field="id_estudiante"></p-sortIcon></th>
+          <th pSortableColumn="id_persona.nombre">Nombre <p-sortIcon field="id_persona.nombre"></p-sortIcon></th>
+          <th pSortableColumn="id_persona.apellido">Apellidos <p-sortIcon field="id_persona.apellido"></p-sortIcon></th>
+          <th>Acción</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-product>
+        <tr>
+          <td>{{ product.id_estudiante }}</td>
+          <td>{{ product.id_persona.nombre }}</td>
+          <td>{{ product.id_persona.apellido }}</td>
+          <td>
+            <button
+              pButton
+              pRipple
+              icon="pi pi-id-card"
+              class="p-button-rounded p-button-success"
+              (click)="mostrarInfo(product.id_estudiante)"
+            ></button>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+
+    @if (botonReportes) {
+      <div class="reportes-section">
+        <div class="flex flex-wrap align-items-center gap-3">
+          <button pButton pRipple label="Reporte por curso" icon="pi pi-users" (click)="reporteCurso()"></button>
+
+          <div class="flex flex-wrap align-items-center gap-2">
+            <p-datepicker
+              placeholder="Fecha inicial"
+              (onSelect)="onSelectFechaInicioCurso()"
+              [formControl]="fechaInicio"
+              [showIcon]="true"
+              dateFormat="yy/mm/dd"
+              inputId="fechaInicioCurso"
+              styleClass="w-full sm:w-auto"
+            ></p-datepicker>
+
+            @if (showFechaFinCurso) {
+              <p-datepicker
+                placeholder="Fecha final"
+                (onSelect)="onSelectFechaFinCurso()"
+                [formControl]="fechaFin"
+                [showIcon]="true"
+                dateFormat="yy/mm/dd"
+                inputId="fechaFinCurso"
+                styleClass="w-full sm:w-auto"
+              ></p-datepicker>
+            }
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+
+  <p-dialog
+    [(visible)]="showDialog"
+    [style]="{ width: '90vw', maxWidth: '600px' }"
+    header="Información del Estudiante"
+    [modal]="true"
+    styleClass="p-fluid"
+  >
+    <ng-template pTemplate="content">
+      @if (loadingEstudiante()) {
+        <div class="flex justify-content-center p-4">
+          <i class="pi pi-spin pi-spinner" style="font-size: 2rem"></i>
+        </div>
+      } @else {
+        @for (est of estudianteInfo; track est.id_estudiante) {
+          <div class="estudiante-info-card">
+            <div class="info-row">
+              <span class="info-label">Nombre:</span>
+              <span class="info-value">{{ est.id_persona.nombre }} {{ est.id_persona.apellido }}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Cédula:</span>
+              <span class="info-value">{{ est.id_persona.cedula }}</span>
+            </div>
+          </div>
+        }
+
+        <p-table
+          [value]="fechasFaltas"
+          [rows]="5"
+          [paginator]="true"
+          responsiveLayout="scroll"
+          currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} asistencias"
+          [showCurrentPageReport]="true"
+        >
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Asignatura</th>
+              <th>Fecha</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-item>
+            <tr>
+              <td>{{ item.idAsignatura?.descripcion }}</td>
+              <td>{{ item.fecClase | date: 'yyyy-MM-dd' }}</td>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="summary">
+            <div class="flex align-items-center justify-content-between">
+              Total de faltas: {{ fechasFaltas.length }}
+            </div>
+          </ng-template>
+        </p-table>
+      }
+    </ng-template>
+
+    <ng-template pTemplate="footer">
+      <div class="grid formgrid">
+        <div class="field col-12 md:col-4">
+          <p-datepicker
+            placeholder="Fecha inicial"
+            (onSelect)="onSelectFechaInicioIndi()"
+            [formControl]="fechaInicioIndi"
+            [showIcon]="true"
+            dateFormat="yy/mm/dd"
+            inputId="fechaInicioIndi"
+          ></p-datepicker>
+        </div>
+        <div class="field col-12 md:col-4">
+          @if (showFechaFinIndi) {
+            <p-datepicker
+              placeholder="Fecha final"
+              (onSelect)="onSelectFechaFinIndi()"
+              [formControl]="fechaFinIndi"
+              [showIcon]="true"
+              dateFormat="yy/mm/dd"
+              inputId="fechaFinIndi"
+            ></p-datepicker>
+          }
+        </div>
+        <div class="field col-12 md:col-4">
+          <button pButton pRipple label="Reporte Individual" icon="pi pi-user" (click)="reporteIndividual()"></button>
+        </div>
+      </div>
+    </ng-template>
+  </p-dialog>
+</div>

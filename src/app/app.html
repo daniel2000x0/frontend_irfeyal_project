@@ -1,0 +1,24 @@
+<div class="app-layout">
+  <header class="app-header">
+    <div class="header-brand">
+      <i class="pi pi-calendar-clock"></i>
+      <span>Sistema de Asistencia</span>
+    </div>
+    <nav class="header-nav">
+      <a routerLink="/asistencia/listar" routerLinkActive="active" [routerLinkActiveOptions]="{exact: false}">
+        <i class="pi pi-list"></i> Listar Asistencia
+      </a>
+      <a routerLink="/asistencia/registrar" routerLinkActive="active" [routerLinkActiveOptions]="{exact: false}">
+        <i class="pi pi-plus-circle"></i> Registrar Asistencia
+      </a>
+    </nav>
+    <div class="header-user">
+      <i class="pi pi-user"></i>
+      <span>Administrador</span>
+    </div>
+  </header>
+
+  <main class="app-main">
+    <router-outlet />
+  </main>
+</div>

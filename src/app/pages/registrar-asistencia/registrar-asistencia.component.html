@@ -1,0 +1,263 @@
+<div class="asistencia-page">
+  <div class="page-header">
+    <h1><i class="pi pi-pencil"></i> Registrar Asistencia</h1>
+    <p class="page-subtitle">Gestión de asistencia diaria de estudiantes</p>
+  </div>
+
+  <p-toast></p-toast>
+
+  <div class="page-card">
+    <p-toolbar styleClass="mb-4">
+      <div class="grid formgrid p-fluid w-full">
+        <div class="field col-12 md:col-4">
+          <label>Periodo</label>
+          <p-select
+            [options]="periodos"
+            placeholder="Seleccione un periodo"
+            optionLabel="malla.descripcion"
+            optionValue="id_periodo"
+            (onChange)="onPeriodo('crear', $event.value)"
+            [showClear]="true"
+          >
+            <ng-template let-item pTemplate="item">
+              <div>{{ item.malla.descripcion }} | {{ item.fecha_inicio | date: 'yyyy-MM-dd' }} — {{ item.fecha_fin | date: 'yyyy-MM-dd' }}</div>
+            </ng-template>
+          </p-select>
+        </div>
+
+        <div class="field col-12 md:col-4">
+          <label>Modalidad</label>
+          <p-select
+            [disabled]="filtros.showModalidad"
+            [options]="modalidades"
+            placeholder="Seleccione una modalidad"
+            optionLabel="descripcion"
+            optionValue="id_modalidad"
+            (onChange)="onModalidad('crear', $event.value)"
+            [showClear]="true"
+          ></p-select>
+        </div>
+
+        <div class="field col-12 md:col-4">
+          <label>Curso</label>
+          <p-select
+            [disabled]="filtros.showCurso"
+            [options]="cursos"
+            placeholder="Seleccione un curso"
+            optionLabel="descripcion"
+            optionValue="id_curso"
+            (onChange)="onCurso('crear', $event.value)"
+            [showClear]="true"
+          ></p-select>
+        </div>
+
+        <div class="field col-12 md:col-4">
+          <label>Paralelo</label>
+          <p-select
+            [disabled]="filtros.showParalelo"
+            [options]="paralelos"
+            placeholder="Seleccione un paralelo"
+            optionLabel="descripcion"
+            optionValue="id_paralelo"
+            (onChange)="onParalelo('crear', $event.value)"
+            [showClear]="true"
+          ></p-select>
+        </div>
+
+        <div class="field col-12 md:col-4">
+          <label>Asignatura</label>
+          <p-select
+            [disabled]="filtros.showAsignatura"
+            [options]="asignaturas"
+            placeholder="Seleccione una asignatura"
+            optionLabel="descripcion"
+            optionValue="id_asignatura"
+            (onChange)="onAsignatura('crear', $event.value)"
+            [showClear]="true"
+          ></p-select>
+        </div>
+      </div>
+    </p-toolbar>
+
+    <form>
+      <div class="flex flex-wrap align-items-center gap-3 mb-4">
+        <button pButton pRipple label="Registrar" icon="pi pi-check" type="button" (click)="submit()"></button>
+
+        @if (showDiv) {
+          <div class="field w-full sm:w-auto">
+            <input
+              type="date"
+              class="form-control w-full"
+              [formControl]="fechaControl"
+              (change)="onValidarFecha()"
+            />
+          </div>
+        }
+      </div>
+
+      <p-table
+        #dt1
+        [value]="estudiantes"
+        [rows]="10"
+        [paginator]="true"
+        [globalFilterFields]="['id_persona.cedula','id_persona.nombre','id_persona.apellido']"
+        styleClass="p-datatable-striped"
+        responsiveLayout="scroll"
+        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} estudiantes"
+        [showCurrentPageReport]="true"
+      >
+        <ng-template pTemplate="header">
+          <tr>
+            <th pSortableColumn="id_estudiante">ID <p-sortIcon field="id_estudiante"></p-sortIcon></th>
+            <th pSortableColumn="id_persona.nombre">Nombre <p-sortIcon field="id_persona.nombre"></p-sortIcon></th>
+            <th pSortableColumn="id_persona.apellido">Apellidos <p-sortIcon field="id_persona.apellido"></p-sortIcon></th>
+            <th>Falta</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-product>
+          <tr>
+            <td>{{ product.id_estudiante }}</td>
+            <td>{{ product.id_persona.nombre }}</td>
+            <td>{{ product.id_persona.apellido }}</td>
+            <td>
+              <p-checkbox
+                [binary]="true"
+                [value]="product.id_estudiante"
+                [inputId]="'chk-' + product.id_estudiante"
+                (onChange)="onCheckFalta(product.id_estudiante.toString(), $event.checked)"
+              ></p-checkbox>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </form>
+
+    <div class="mt-4">
+      <button pButton pRipple label="Actualizar Asistencia" icon="pi pi-refresh" class="p-button-secondary" type="button" (click)="actualizar()"></button>
+    </div>
+  </div>
+
+  <p-dialog
+    [(visible)]="actualizarDialog"
+    [style]="{ width: '90vw', maxWidth: '700px' }"
+    header="Actualizar Asistencia"
+    [modal]="true"
+    styleClass="p-fluid"
+  >
+    <div class="grid formgrid p-fluid">
+      <div class="field col-12 md:col-6">
+        <label>Periodo</label>
+        <p-select
+          [options]="periodosActu"
+          placeholder="Periodo"
+          optionLabel="malla.descripcion"
+          optionValue="id_periodo"
+          (onChange)="onPeriodo('actu', $event.value)"
+          [showClear]="true"
+        >
+          <ng-template let-item pTemplate="item">
+            <div>{{ item.malla.descripcion }} | {{ item.fecha_inicio | date: 'yyyy-MM-dd' }}</div>
+          </ng-template>
+        </p-select>
+      </div>
+
+      <div class="field col-12 md:col-6">
+        <label>Modalidad</label>
+        <p-select
+          [disabled]="filtrosActu.showModalidad"
+          [options]="modalidadesActu"
+          placeholder="Modalidad"
+          optionLabel="descripcion"
+          optionValue="id_modalidad"
+          (onChange)="onModalidad('actu', $event.value)"
+          [showClear]="true"
+        ></p-select>
+      </div>
+
+      <div class="field col-12 md:col-6">
+        <label>Curso</label>
+        <p-select
+          [disabled]="filtrosActu.showCurso"
+          [options]="cursosActu"
+          placeholder="Curso"
+          optionLabel="descripcion"
+          optionValue="id_curso"
+          (onChange)="onCurso('actu', $event.value)"
+          [showClear]="true"
+        ></p-select>
+      </div>
+
+      <div class="field col-12 md:col-6">
+        <label>Paralelo</label>
+        <p-select
+          [disabled]="filtrosActu.showParalelo"
+          [options]="paralelosActu"
+          placeholder="Paralelo"
+          optionLabel="descripcion"
+          optionValue="id_paralelo"
+          (onChange)="onParalelo('actu', $event.value)"
+          [showClear]="true"
+        ></p-select>
+      </div>
+
+      <div class="field col-12 md:col-6">
+        <label>Asignatura</label>
+        <p-select
+          [disabled]="filtrosActu.showAsignatura"
+          [options]="asignaturasActu"
+          placeholder="Asignatura"
+          optionLabel="descripcion"
+          optionValue="id_asignatura"
+          (onChange)="onAsignatura('actu', $event.value)"
+          [showClear]="true"
+        ></p-select>
+      </div>
+
+      <div class="field col-12 md:col-6 flex flex-wrap align-items-end gap-2">
+        <input
+          type="date"
+          class="form-control w-full sm:w-auto"
+          [formControl]="fechaControlActu"
+          (change)="validaFechaActualizar()"
+        />
+        <button pButton pRipple label="Filtrar" icon="pi pi-search" type="button" (click)="buscarActualizar()"></button>
+      </div>
+    </div>
+
+    <p-table
+      #dt13
+      [value]="asistenciaActualizar"
+      [rows]="5"
+      [paginator]="true"
+      [globalFilterFields]="['idEstudiante.id_persona.cedula','idEstudiante.id_persona.nombre','idEstudiante.id_persona.apellido']"
+      styleClass="p-datatable-striped p-mt-3"
+      responsiveLayout="scroll"
+      currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} estudiantes"
+      [showCurrentPageReport]="true"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th pSortableColumn="idAsistencia">ID <p-sortIcon field="idAsistencia"></p-sortIcon></th>
+          <th pSortableColumn="idEstudiante.id_persona.nombre">Nombre <p-sortIcon field="idEstudiante.id_persona.nombre"></p-sortIcon></th>
+          <th pSortableColumn="idEstudiante.id_persona.apellido">Apellidos <p-sortIcon field="idEstudiante.id_persona.apellido"></p-sortIcon></th>
+          <th>Falta</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-product>
+        <tr>
+          <td>{{ product.idAsistencia }}</td>
+          <td>{{ product.idEstudiante?.id_persona?.nombre }}</td>
+          <td>{{ product.idEstudiante?.id_persona?.apellido }}</td>
+          <td>
+            <input
+              type="checkbox"
+              [checked]="product.estadoAsis"
+              [value]="product.idAsistencia"
+              (change)="cambioFalta($event.target.value, $event.target.checked)"
+            />
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </p-dialog>
+</div>
