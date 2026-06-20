@@ -14,9 +14,11 @@ import { InputText } from 'primeng/inputtext';
 import { Ripple } from 'primeng/ripple';
 import { AsistenciaService } from '../../services/asistencia.service';
 import { AuthService } from '../../services/auth.service';
+import { ReporteService } from '../../services/reporte.service';
 import { Estudiante } from '../../models/estudiante';
 import { Periodo, Modalidad, Curso, Paralelo, Asignatura, FechaAsistencia } from '../../models/catalogo';
 import { FiltroState } from '../../dto';
+import { FullNamePipe } from '../../pipes/full-name.pipe';
 
 @Component({
   selector: 'app-listar-asistencia',
@@ -34,6 +36,7 @@ import { FiltroState } from '../../dto';
     DatePicker,
     InputText,
     Ripple,
+    FullNamePipe,
   ],
   templateUrl: './listar-asistencia.component.html',
   styleUrl: './listar-asistencia.component.scss',
@@ -41,6 +44,9 @@ import { FiltroState } from '../../dto';
 })
 export class ListarAsistenciaComponent implements OnInit, OnDestroy {
   loading = signal(false);
+  loadingCursos = signal(false);
+  loadingParalelos = signal(false);
+  loadingAsignaturas = signal(false);
   loadingEstudiante = signal(false);
 
   periodos: Periodo[] = [];
@@ -88,6 +94,7 @@ export class ListarAsistenciaComponent implements OnInit, OnDestroy {
     private svc: AsistenciaService,
     private auth: AuthService,
     private msg: MessageService,
+    private reporteSvc: ReporteService,
   ) {}
 
   ngOnInit(): void {
@@ -110,42 +117,46 @@ export class ListarAsistenciaComponent implements OnInit, OnDestroy {
   }
 
   private cargarCursos(): void {
+    this.loadingCursos.set(true);
     const call = this.isAdmin
       ? this.svc.getAllCurso()
       : this.svc.listarCursos(this.empleadoId, this.filtros.idPeriodo, this.filtros.idModalidad);
     call.pipe(takeUntil(this.destroy$)).subscribe({
-      next: data => (this.cursos = data),
-      error: () => this.mostrarError('Error al cargar cursos'),
+      next: data => { this.cursos = data; this.loadingCursos.set(false); },
+      error: () => { this.mostrarError('Error al cargar cursos'); this.loadingCursos.set(false); },
     });
   }
 
   private cargarModalidades(): void {
+    this.loading.set(true);
     const call = this.isAdmin
       ? this.svc.getAllModalidad()
       : this.svc.listarModalidad(this.empleadoId, this.filtros.idPeriodo);
     call.pipe(takeUntil(this.destroy$)).subscribe({
-      next: data => (this.modalidades = data),
-      error: () => this.mostrarError('Error al cargar modalidades'),
+      next: data => { this.modalidades = data; this.loading.set(false); },
+      error: () => { this.mostrarError('Error al cargar modalidades'); this.loading.set(false); },
     });
   }
 
   private cargarParalelos(): void {
+    this.loadingParalelos.set(true);
     const call = this.isAdmin
       ? this.svc.getAllParalelo()
       : this.svc.listarParalelo(this.empleadoId, this.filtros.idPeriodo, this.filtros.idModalidad, this.filtros.idCurso);
     call.pipe(takeUntil(this.destroy$)).subscribe({
-      next: data => (this.paralelos = data),
-      error: () => this.mostrarError('Error al cargar paralelos'),
+      next: data => { this.paralelos = data; this.loadingParalelos.set(false); },
+      error: () => { this.mostrarError('Error al cargar paralelos'); this.loadingParalelos.set(false); },
     });
   }
 
   private cargarAsignaturas(): void {
+    this.loadingAsignaturas.set(true);
     const call = this.isAdmin
       ? this.svc.getAllAsignatura()
       : this.svc.listarAsignatura(this.empleadoId, this.filtros.idPeriodo, this.filtros.idModalidad, this.filtros.idCurso, this.filtros.idParalelo);
     call.pipe(takeUntil(this.destroy$)).subscribe({
-      next: data => (this.asignaturas = data),
-      error: () => this.mostrarError('Error al cargar asignaturas'),
+      next: data => { this.asignaturas = data; this.loadingAsignaturas.set(false); },
+      error: () => { this.mostrarError('Error al cargar asignaturas'); this.loadingAsignaturas.set(false); },
     });
   }
 
@@ -246,10 +257,10 @@ export class ListarAsistenciaComponent implements OnInit, OnDestroy {
     }
     const inicio = new Date(this.fechaInicioStr);
     const fin = new Date(this.fechaFinStr);
-    this.svc.exportInvoiceCurso(this.filtros.idModalidad, this.filtros.idPeriodo, this.filtros.idParalelo, this.filtros.idAsignatura, this.filtros.idCurso, this.empleadoId, this.auth.usuario().id_usuario, inicio, fin)
+    this.reporteSvc.generarReporteCurso(this.filtros, this.empleadoId, this.auth.usuario().id_usuario, inicio, fin)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: data => window.open(URL.createObjectURL(new Blob([data], { type: 'application/pdf' }))),
+        next: data => this.reporteSvc.abrirPDF(data),
         error: () => this.mostrarError('Error al generar reporte del curso'),
       });
   }
@@ -261,10 +272,10 @@ export class ListarAsistenciaComponent implements OnInit, OnDestroy {
     }
     const inicio = new Date(this.fechaInicioStrIndi);
     const fin = new Date(this.fechaFinStrIndi);
-    this.svc.exportInvoice(this.idEstudiante, this.empleadoId, this.filtros.idAsignatura, this.auth.usuario().id_usuario, inicio, fin)
+    this.reporteSvc.generarReporteIndividual(this.idEstudiante, this.empleadoId, this.filtros.idAsignatura, this.auth.usuario().id_usuario, inicio, fin)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: data => window.open(URL.createObjectURL(new Blob([data], { type: 'application/pdf' }))),
+        next: data => this.reporteSvc.abrirPDF(data),
         error: () => this.mostrarError('Error al generar reporte individual'),
       });
   }

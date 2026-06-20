@@ -238,16 +238,14 @@
       <ng-template pTemplate="header">
         <tr>
           <th pSortableColumn="idAsistencia">ID <p-sortIcon field="idAsistencia"></p-sortIcon></th>
-          <th pSortableColumn="idEstudiante.id_persona.nombre">Nombre <p-sortIcon field="idEstudiante.id_persona.nombre"></p-sortIcon></th>
-          <th pSortableColumn="idEstudiante.id_persona.apellido">Apellidos <p-sortIcon field="idEstudiante.id_persona.apellido"></p-sortIcon></th>
+          <th pSortableColumn="idEstudiante.id_persona.nombre">Nombre Completo <p-sortIcon field="idEstudiante.id_persona.nombre"></p-sortIcon></th>
           <th>Falta</th>
         </tr>
       </ng-template>
       <ng-template pTemplate="body" let-product>
         <tr>
           <td>{{ product.idAsistencia }}</td>
-          <td>{{ product.idEstudiante?.id_persona?.nombre }}</td>
-          <td>{{ product.idEstudiante?.id_persona?.apellido }}</td>
+          <td colspan="2">{{ product.idEstudiante?.id_persona | fullName }}</td>
           <td>
             <input
               type="checkbox"

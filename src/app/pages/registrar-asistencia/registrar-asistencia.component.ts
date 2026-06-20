@@ -18,6 +18,7 @@ import { Estudiante } from '../../models/estudiante';
 import { Asistencia, Clase } from '../../models/asistencia';
 import { Periodo, Modalidad, Curso, Paralelo, Asignatura } from '../../models/catalogo';
 import { FiltroState, CrearClaseDto, DestType } from '../../dto';
+import { FullNamePipe } from '../../pipes/full-name.pipe';
 
 @Component({
   selector: 'app-registrar-asistencia',
@@ -33,6 +34,7 @@ import { FiltroState, CrearClaseDto, DestType } from '../../dto';
     Dialog,
     Checkbox,
     Ripple,
+    FullNamePipe,
   ],
   templateUrl: './registrar-asistencia.component.html',
   styleUrl: './registrar-asistencia.component.scss',
@@ -40,6 +42,9 @@ import { FiltroState, CrearClaseDto, DestType } from '../../dto';
 })
 export class RegistrarAsistenciaComponent implements OnInit, OnDestroy {
   loading = signal(false);
+  loadingCursos = signal(false);
+  loadingParalelos = signal(false);
+  loadingAsignaturas = signal(false);
   showDiv = false;
 
   periodos: Periodo[] = [];
@@ -117,6 +122,7 @@ export class RegistrarAsistenciaComponent implements OnInit, OnDestroy {
 
   private cargarCursos(dest: DestType): void {
     const f = dest === 'crear' ? this.filtros : this.filtrosActu;
+    this.loadingCursos.set(true);
     const call = this.isAdmin
       ? this.svc.getAllCurso()
       : this.svc.listarCursos(this.empleadoId, f.idPeriodo, f.idModalidad);
@@ -124,13 +130,15 @@ export class RegistrarAsistenciaComponent implements OnInit, OnDestroy {
       next: data => {
         if (dest === 'crear') this.cursos = data;
         else this.cursosActu = data;
+        this.loadingCursos.set(false);
       },
-      error: () => this.mostrarError('Error al cargar cursos'),
+      error: () => { this.mostrarError('Error al cargar cursos'); this.loadingCursos.set(false); },
     });
   }
 
   private cargarModalidades(dest: DestType): void {
     const f = dest === 'crear' ? this.filtros : this.filtrosActu;
+    this.loading.set(true);
     const call = this.isAdmin
       ? this.svc.getAllModalidad()
       : this.svc.listarModalidad(this.empleadoId, f.idPeriodo);
@@ -138,13 +146,15 @@ export class RegistrarAsistenciaComponent implements OnInit, OnDestroy {
       next: data => {
         if (dest === 'crear') this.modalidades = data;
         else this.modalidadesActu = data;
+        this.loading.set(false);
       },
-      error: () => this.mostrarError('Error al cargar modalidades'),
+      error: () => { this.mostrarError('Error al cargar modalidades'); this.loading.set(false); },
     });
   }
 
   private cargarParalelos(dest: DestType): void {
     const f = dest === 'crear' ? this.filtros : this.filtrosActu;
+    this.loadingParalelos.set(true);
     const call = this.isAdmin
       ? this.svc.getAllParalelo()
       : this.svc.listarParalelo(this.empleadoId, f.idPeriodo, f.idModalidad, f.idCurso);
@@ -152,13 +162,15 @@ export class RegistrarAsistenciaComponent implements OnInit, OnDestroy {
       next: data => {
         if (dest === 'crear') this.paralelos = data;
         else this.paralelosActu = data;
+        this.loadingParalelos.set(false);
       },
-      error: () => this.mostrarError('Error al cargar paralelos'),
+      error: () => { this.mostrarError('Error al cargar paralelos'); this.loadingParalelos.set(false); },
     });
   }
 
   private cargarAsignaturas(dest: DestType): void {
     const f = dest === 'crear' ? this.filtros : this.filtrosActu;
+    this.loadingAsignaturas.set(true);
     const call = this.isAdmin
       ? this.svc.getAllAsignatura()
       : this.svc.listarAsignatura(this.empleadoId, f.idPeriodo, f.idModalidad, f.idCurso, f.idParalelo);
@@ -166,8 +178,9 @@ export class RegistrarAsistenciaComponent implements OnInit, OnDestroy {
       next: data => {
         if (dest === 'crear') this.asignaturas = data;
         else this.asignaturasActu = data;
+        this.loadingAsignaturas.set(false);
       },
-      error: () => this.mostrarError('Error al cargar asignaturas'),
+      error: () => { this.mostrarError('Error al cargar asignaturas'); this.loadingAsignaturas.set(false); },
     });
   }
 
